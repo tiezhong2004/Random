@@ -1,0 +1,117 @@
+
+<html>
+    <head>
+        <script type="text/javascript" src="jquery-1.6.4.min.js"></script>
+        <script>
+
+            Dice = {
+                roll: function() {
+                    return Math.floor(Math.random()*6) + 1;
+                }
+            };
+
+            Army = {
+                throwDice: function(num_) {
+                    var r = [];
+
+                    for(i = 0; i != num_; ++i)
+                        r.push(Dice.roll());
+                    return r;
+                },
+                attack: function(num_) {
+                    return this.throwDice(num_); 
+                },
+
+                defend: function(num_) {         
+                    return this.throwDice(num_);
+                }
+            };
+            
+            // Battles consist of a maximum of 3 attack and 2 defence units
+            Battle = {
+                fight: function(numAttack_, numDefend_){
+
+                    var a = Army.attack(numAttack_);
+                    var b = Army.defend(numDefend_);
+        
+                    var aLost = 0;
+                    var bLost = 0;
+
+                    a.sort().reverse();
+                    b.sort().reverse();
+                    
+                    if(a[0] > b[0])
+                        bLost += 1;
+                    else
+                        aLost += 1;
+
+                    if (bLost < 2) // Dont allow 2nd dice comparison if already dead
+                    {
+                        if(a[1] > b[1])
+                            bLost += 1;
+                        else
+                            aLost += 1;
+                    }
+
+                    return { attackUnitsLost: aLost, defendUnitsLost: bLost};
+                }
+            };
+
+            War = {
+                calc: function(numAttack_, numDefend_){
+                    var attackDice = 1;
+                    var defendDice = 1;
+                               
+                    // Check how many dice can be thrown by both
+                    if(numAttack_ > 2)
+                        attackDice = 3;
+                    else if (numAttack_ > 1)
+                        attackDice = 2;
+
+                    if(numDefend_ > 1)
+                        defendDice = 2;
+
+                    // Setup battle and fight
+                    return Battle.fight(attackDice, defendDice);
+                },
+                fight: function(numAttack_, numDefend_){
+
+                    var result = this.calc(numAttack_, numDefend_);
+                    numAttack_ -= result.attackUnitsLost;
+                    numDefend_ -= result.defendUnitsLost;
+
+                    return { attackUnits: numAttack_, defendUnits: numDefend_};
+
+                },
+                fightToDeath: function(numAttack_, numDefend_){
+                    while(numAttack_ > 1)
+                    {
+                        var result = this.calc(numAttack_, numDefend_);
+                        numAttack_ -= result.attackUnitsLost;
+                        numDefend_ -= result.defendUnitsLost;
+
+                        if (numDefend_ <= 0)
+                            break;
+                    }
+                    return { attackUnits: numAttack_, defendUnits: numDefend_};
+                }
+            }
+
+            $(function(){
+                $('#start')[0].onclick = function(event){
+                    w = War.fightToDeath(100, 100);
+                    $('#result').html("Attack: " + w.attackUnits + " Defence: " + w.defendUnits);
+                };
+            });
+        </script>
+    </head>
+    <body>
+        <h1>Risk Calculator</h1>
+        <form>
+            <p>Num Attack</p>
+            <p>Num Defence</p>
+        </form>
+        <p id="start">Start</p>
+        <p id="result"></p>
+    </body>
+</html>
